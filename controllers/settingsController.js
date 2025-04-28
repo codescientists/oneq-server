@@ -1,29 +1,33 @@
-const { createConnection } = require('../utils/dbConnection');
+const { createPool } = require('../utils/dbConnection');
 const { getConfigForDomain } = require('../utils/dbConfigManager');
 
 // GET Business Settings
 exports.getSettings = async (req, res) => {
     const { domain } = req.body;
-
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
         const { prefix } = dbConfig;
 
         const [rows] = await connection.query(`SELECT * FROM ${prefix}settings WHERE id = 1`);
         res.json(rows[0] || {});
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };
 
 // UPSERT Business Settings
 exports.updateSettings = async (req, res) => {
     const { domain, settings } = req.body;
-
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
         const { prefix } = dbConfig;
 
         await connection.query(`
@@ -72,5 +76,7 @@ exports.updateSettings = async (req, res) => {
         res.json({ success: true, message: 'Settings saved' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };

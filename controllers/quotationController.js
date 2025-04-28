@@ -1,15 +1,17 @@
-const { createConnection } = require('../utils/dbConnection');
+const { createPool } = require('../utils/dbConnection');
 const { getConfigForDomain } = require('../utils/dbConfigManager');
 
 // CREATE Quotation
 exports.createQuotation = async (req, res) => {
     const { domain, quotation } = req.body;
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
         if (!dbConfig) return res.status(400).json({ success: false, message: 'No DB config found for domain' });
 
         const { prefix } = dbConfig;
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
 
         await connection.query(`
       CREATE TABLE IF NOT EXISTS ${prefix}quotations (
@@ -85,21 +87,27 @@ exports.createQuotation = async (req, res) => {
         res.status(201).json({ success: true, message: 'Quotation created' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };
 
 // GET All Quotations
 exports.getAllQuotations = async (req, res) => {
     const { domain } = req.body;
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
         const { prefix } = dbConfig;
 
         const [rows] = await connection.query(`SELECT * FROM ${prefix}quotations`);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };
 
@@ -111,9 +119,11 @@ exports.getOneQuotation = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Quotation ID is required' });
     }
 
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
         const { prefix } = dbConfig;
 
         const [rows] = await connection.query(
@@ -128,6 +138,8 @@ exports.getOneQuotation = async (req, res) => {
         res.json({ success: true, quotation: rows[0] });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };
 
@@ -135,9 +147,11 @@ exports.getOneQuotation = async (req, res) => {
 // UPDATE Quotation
 exports.updateQuotation = async (req, res) => {
     const { domain, id, updates } = req.body;
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
         const { prefix } = dbConfig;
 
         if (updates.products) {
@@ -155,20 +169,26 @@ exports.updateQuotation = async (req, res) => {
         res.json({ success: true, message: 'Quotation updated' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };
 
 // DELETE Quotation
 exports.deleteQuotation = async (req, res) => {
     const { domain, id } = req.body;
+    let pool, connection;
     try {
         const dbConfig = getConfigForDomain(domain);
-        const connection = await createConnection(dbConfig);
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
         const { prefix } = dbConfig;
 
         await connection.query(`DELETE FROM ${prefix}quotations WHERE id = ?`, [id]);
         res.json({ success: true, message: 'Quotation deleted' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
     }
 };

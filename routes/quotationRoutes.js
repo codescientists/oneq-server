@@ -6,6 +6,6 @@ router.post('/create', quotationController.createQuotation);
 router.post('/get-all', quotationController.getAllQuotations);
 router.post('/get-one', quotationController.getOneQuotation);
 router.put('/update', quotationController.updateQuotation);
-router.delete('/delete', quotationController.deleteQuotation);
+router.post('/delete', quotationController.deleteQuotation);
 
 module.exports = router;
