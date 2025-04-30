@@ -184,13 +184,12 @@ exports.deleteProduct = async (req, res) => {
 };
 
 
-
-
 // BULK CREATE
 exports.bulkCreateProducts = async (req, res) => {
     const { domain, products } = req.body;
     const { productType } = req.params;
     let pool, connection;
+
     try {
         const dbConfig = getConfigForDomain(domain);
         if (!dbConfig) {
@@ -200,13 +199,12 @@ exports.bulkCreateProducts = async (req, res) => {
         const { prefix } = dbConfig;
         pool = createPool(dbConfig);
         connection = await pool.getConnection();
-        const schema = tableSchemas[productType];
 
+        const schema = tableSchemas[productType];
         if (!schema) {
             return res.status(400).json({ success: false, message: 'Invalid product type' });
         }
 
-        // Create table if not exists
         await connection.query(schema.replace('{{prefix}}', prefix));
 
         if (!Array.isArray(products) || products.length === 0) {
@@ -215,10 +213,51 @@ exports.bulkCreateProducts = async (req, res) => {
 
         const table = `${prefix}${productType}_products`;
 
-        // Insert products
-        const keys = Object.keys(products[0]);
-        const placeholders = products.map(() => `(${keys.map(() => '?').join(', ')})`).join(', ');
-        const values = products.flatMap(product => keys.map(key => product[key]));
+        // Fetch existing rows
+        const [existingRows] = await connection.query(`SELECT * FROM ${table}`);
+
+        // Compare all fields
+        const getComparisonKeys = (productType) => {
+            switch (productType) {
+                case 'tiles':
+                    return ['brand', 'dimensions', 'shadeName'];
+                case 'adhesive':
+                    return ['brand', 'category'];
+                case 'cpsw':
+                    return ['brand', 'productCode'];
+                default:
+                    return []; // fallback
+            }
+        };
+
+        const comparisonKeys = getComparisonKeys(productType);
+
+        const filteredProducts = products.filter(p => {
+            return !existingRows.some(row => {
+                return comparisonKeys.every(key => {
+                    const val1 = p[key];
+                    const val2 = row[key];
+
+                    if (val1 === null || val2 === null) return val1 === val2;
+
+                    if (typeof val1 === 'number' || typeof val2 === 'number') {
+                        return Number(val1).toFixed(2) === Number(val2).toFixed(2);
+                    }
+
+                    return String(val1).trim().toLowerCase() === String(val2).trim().toLowerCase();
+                });
+            });
+        });
+
+
+        if (filteredProducts.length === 0) {
+            return res.status(400).json({ success: false, message: 'All products are duplicates' });
+        }
+
+        // Insert new products
+        const keys = Object.keys(filteredProducts[0]);
+        const placeholders = filteredProducts.map(() => `(${keys.map(() => '?').join(', ')})`).join(', ');
+        const values = filteredProducts.flatMap(product => keys.map(key => product[key]));
 
         const insertQuery = `
         INSERT INTO ${table} (${keys.join(', ')})
@@ -227,7 +266,7 @@ exports.bulkCreateProducts = async (req, res) => {
 
         await connection.query(insertQuery, values);
 
-        // 🔥 After inserting, rearrange SNOs
+        // Rearrange SNOs
         await connection.query(`SET @sno = 0`);
         await connection.query(`
         UPDATE ${table}
@@ -235,9 +274,63 @@ exports.bulkCreateProducts = async (req, res) => {
         ORDER BY id ASC
       `);
 
-        res.status(201).json({ success: true, message: `${products.length} ${productType} products created successfully` });
+        res.status(201).json({ success: true, message: `${filteredProducts.length} ${productType} products created successfully` });
+
     } catch (error) {
         console.error('Bulk create error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+exports.bulkDeleteProducts = async (req, res) => {
+    const { domain, ids } = req.body;
+    const { productType } = req.params;
+
+    let pool, connection;
+
+    try {
+        const dbConfig = getConfigForDomain(domain);
+        if (!dbConfig) {
+            return res.status(400).json({ success: false, message: 'No DB config found for domain' });
+        }
+
+        const { prefix } = dbConfig;
+        pool = createPool(dbConfig);
+        connection = await pool.getConnection();
+
+        const schema = tableSchemas[productType];
+        if (!schema) {
+            return res.status(400).json({ success: false, message: 'Invalid product type' });
+        }
+
+        await connection.query(schema.replace('{{prefix}}', prefix));
+
+        const table = `${prefix}${productType}_products`;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, message: 'No IDs provided for deletion' });
+        }
+
+        // Use placeholders to safely insert ids
+        const placeholders = ids.map(() => '?').join(', ');
+        const deleteQuery = `DELETE FROM ${table} WHERE id IN (${placeholders})`;
+
+        const [result] = await connection.query(deleteQuery, ids);
+
+        // Reorder SNOs after deletion
+        await connection.query(`SET @sno = 0`);
+        await connection.query(`
+        UPDATE ${table}
+        SET sno = (@sno := @sno + 1)
+        ORDER BY id ASC
+      `);
+
+        res.status(200).json({ success: true, message: `${result.affectedRows} ${productType} products deleted successfully` });
+
+    } catch (error) {
+        console.error('Bulk delete error:', error);
         res.status(500).json({ success: false, message: error.message });
     } finally {
         if (connection) connection.release();
