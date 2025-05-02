@@ -40,6 +40,8 @@ exports.updateSettings = async (req, res) => {
         businessZipCode VARCHAR(20),
         businessPhone VARCHAR(50),
         businessEmail VARCHAR(255),
+        superAdminEmail VARCHAR(255),
+        superAdminPassword VARCHAR(255),
         logo TEXT
       )
     `);

@@ -17,6 +17,7 @@ const customerRoutes = require('./routes/customerRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const quotationRoutes = require('./routes/quotationRoutes');
 const settingRoutes = require('./routes/settingRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const { getConfigForDomain } = require("./utils/dbConfigManager");
 
@@ -29,6 +30,7 @@ app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/staffs', staffRoutes);
 app.use('/api/v1/quotations', quotationRoutes);
 app.use('/api/v1/settings', settingRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 
 app.get('/api/v1/check-installed', (req, res) => {
