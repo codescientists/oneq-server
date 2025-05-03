@@ -6,7 +6,8 @@ const fs = require("fs");
 const path = require("path");
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // or higher if needed
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const migrateDataRoutes = require('./routes/migrateData');
 const tilesRoutes = require('./routes/tilesRoutes');
@@ -20,6 +21,7 @@ const settingRoutes = require('./routes/settingRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const { getConfigForDomain } = require("./utils/dbConfigManager");
+
 
 app.use('/api/v1', migrateDataRoutes);
 app.use('/api/v1/tiles', tilesRoutes);
