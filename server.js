@@ -5,6 +5,7 @@ const ftp = require("basic-ftp");
 const fs = require("fs");
 const path = require("path");
 const app = express();
+require('dotenv').config()
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // or higher if needed
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -54,9 +55,9 @@ app.post("/api/v1/upload", upload.single("image"), async (req, res) => {
     const client = new ftp.Client();
     try {
         await client.access({
-            host: "82.180.143.227",
-            user: "u417227553.mediumblue-rook-336283.hostingersite.com",
-            password: "CodeScientist@4321",
+            host: "ftp://86.38.243.145",
+            user: "u707957660.prateektilesandmarbles.com",
+            password: "PratikMarbles@4321",
             secure: false,
             port: 21,
             family: 4,
@@ -73,7 +74,7 @@ app.post("/api/v1/upload", upload.single("image"), async (req, res) => {
 
         res.json({
             status: "success",
-            imageUrl: `https://mediumblue-rook-336283.hostingersite.com/uploads/${remoteFilename}`,
+            imageUrl: `https://prateektilesandmarbles.com/uploads/${remoteFilename}`,
         });
     } catch (err) {
         console.error(err);
