@@ -318,4 +318,39 @@ router.post('/migrate-data', async (req, res) => {
     }
 });
 
+router.post('/test-db-connection', async (req, res) => {
+    const { dbConfig, domain } = req.body;
+
+    if (!dbConfig || !domain) {
+        return res.status(400).json({ success: false, message: 'Missing dbConfig or domain' });
+    }
+
+    try {
+        const connection = await mysql.createConnection({
+            host: dbConfig.host,
+            user: dbConfig.username,
+            password: dbConfig.password,
+            database: dbConfig.database,
+            port: dbConfig.port,
+        });
+
+        await connection.ping();
+        await connection.end();
+
+        // Save dbConfig to file for this domain
+        saveConfigForDomain(domain, dbConfig);
+
+        return res.json({
+            success: true,
+            message: 'Database connection successful and config saved!',
+        });
+    } catch (error) {
+        console.error('DB Connection Error:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to connect to the database.',
+        });
+    }
+});
+
 module.exports = router;

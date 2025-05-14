@@ -1,17 +1,5 @@
 {
-  "tenant1.com": {
-    "host": "localhost",
-    "user": "piyush",
-    "password": "piyush@123",
-    "database": "tenant1_db"
-  },
-  "tenant2.com": {
-    "host": "localhost",
-    "user": "rahul",
-    "password": "rahul@123",
-    "database": "tenant2_db"
-  },
-  "localhost:3000": {
+  "mediumblue-rook-336283.hostingersite.com": {
     "host": "82.180.143.204",
     "database": "u417227553_oneq",
     "username": "u417227553_piyush",
@@ -19,11 +7,11 @@
     "port": "3306",
     "prefix": "quotation_"
   },
-  "mediumblue-rook-336283.hostingersite.com": {
-    "host": "82.180.143.204",
-    "database": "u417227553_oneq",
-    "username": "u417227553_piyush",
-    "password": "CodeScientist@4321",
+  "localhost:3000": {
+    "host": "193.203.184.64",
+    "database": "u707957660_oneq",
+    "username": "u707957660_admin",
+    "password": "PratikMarbles@4321",
     "port": "3306",
     "prefix": "quotation_"
   }

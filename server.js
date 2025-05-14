@@ -7,7 +7,7 @@ const path = require("path");
 const app = express();
 require('dotenv').config()
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // or higher if needed
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const migrateDataRoutes = require('./routes/migrateData');
