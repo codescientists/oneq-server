@@ -14,5 +14,13 @@
     "password": "PratikMarbles@4321",
     "port": "3306",
     "prefix": "quotation_"
+  },
+  "prateektilesandmarbles.com": {
+    "host": "193.203.184.64",
+    "database": "u707957660_oneq",
+    "username": "u707957660_admin",
+    "password": "PratikMarbles@4321",
+    "port": "3306",
+    "prefix": "quotation_"
   }
 }
