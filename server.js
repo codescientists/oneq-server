@@ -55,9 +55,9 @@ app.post("/api/v1/upload", upload.single("image"), async (req, res) => {
     const client = new ftp.Client();
     try {
         await client.access({
-            host: "ftp://86.38.243.145",
-            user: "u707957660.prateektilesandmarbles.com",
-            password: "PratikMarbles@4321",
+            host: process.env.FTP_HOST,
+            user: process.env.FTP_USER,
+            password: process.env.FTP_PASSWORD,
             secure: false,
             port: 21,
             family: 4,
